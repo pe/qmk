@@ -1,0 +1,34 @@
+name: Build QMK firmware
+on: [push, workflow_dispatch]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container: ghcr.io/qmk/qmk_cli
+    steps:
+    - name: Disable git safe directory checks
+      run : git config --global --add safe.directory '*'
+
+    - name: Checkout QMK
+      uses: actions/checkout@v3
+      with:
+        repository: qmk/qmk_firmware
+        submodules: recursive
+
+    - name: Checkout userspace
+      uses: actions/checkout@v3
+      with:
+        path: keyboards/keychron/q6/iso_encoder/keymaps/${{ github.actor }}
+
+    - name: Build firmware
+      run: qmk compile -kb keychron/q6/iso_encoder -km ${{ github.actor }}
+
+    - name: Archive firmware
+      uses: actions/upload-artifact@v3
+      continue-on-error: true
+      with:
+        name: Firmware
+        path: |
+          *.hex
+          *.bin
+          *.uf2
